@@ -14,7 +14,30 @@ const db_password = process.env.DB_PASSWORD
 const uri = `mongodb+srv://${db_user}:${db_password}@cluster0.uzyhqeg.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-console.log(uri);
+async function run() {
+    try {
+        const carCollections = client.db('car-finder').collection('cars');
+
+        app.get('/category/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                "$or": [
+                    { gearBox: { $regex: id } },
+                    { type: { $regex: id } },
+                    { engine: { $regex: id } }
+                ]
+            }
+            const result = await carCollections.find(query).toArray();
+            res.send(result);
+
+        })
+
+    }
+    finally {
+
+    }
+}
+run().catch(e => console.error(e));
 app.get('/', (req, res) => {
     res.send('car-finder running on server')
 })
