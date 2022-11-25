@@ -49,6 +49,17 @@ async function run() {
             const userBookings = await bookingCollection.find(query).toArray();
             res.send(userBookings);
         })
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const users = await userCollections.find(query).toArray();
+            res.send(users);
+        });
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const seller = await userCollections.findOne(query);
+            res.send({ isSeller: seller?.userType == "I am a Seller" });
+        })
 
     }
     finally {
