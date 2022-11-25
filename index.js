@@ -18,6 +18,7 @@ async function run() {
     try {
         const carCollections = client.db('car-finder').collection('cars');
         const userCollections = client.db('car-finder').collection('users');
+        const bookingCollection = client.db('car-finder').collection('bookings');
 
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
@@ -35,7 +36,12 @@ async function run() {
         app.post('/users', async (req, res) => {
             const user = req.body;
             const newUser = await userCollections.insertOne(user);
-            res.send(result);
+            res.send(newUser);
+        })
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            const newBooking = await bookingCollection.insertOne(booking);
+            res.send(booking);
         })
 
     }
