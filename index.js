@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
 app.use(cors());
@@ -54,12 +54,37 @@ async function run() {
             const users = await userCollections.find(query).toArray();
             res.send(users);
         });
-        app.get('/users/:email', async (req, res) => {
+        app.get('/users/seller/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const seller = await userCollections.findOne(query);
             res.send({ isSeller: seller?.userType == "I am a Seller" });
         })
+        app.get('/users/buyer/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const buyer = await userCollections.findOne(query);
+            res.send({ isBuyer: buyer?.userType == "I am a Buyer" });
+        })
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const admin = await userCollections.findOne(query);
+            res.send({ isAdmin: admin?.userType == "admin" });
+        })
+        app.put('/users/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const userType = req.body;
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    userType: userType.admin
+                }
+            }
+            const result = await userCollections.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
 
     }
     finally {
