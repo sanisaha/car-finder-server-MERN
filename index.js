@@ -52,9 +52,21 @@ async function run() {
         })
         app.get('/cars/:email', async (req, res) => {
             const email = req.params.email;
-            const query = { email };
+            const query = { sellerEmail: email };
             const myProducts = await carCollections.find(query).toArray();
             res.send(myProducts);
+        })
+        app.get('/bookedItems/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { sellerEmail: email };
+            const myProducts = await bookedItemCollection.find(query).toArray();
+            res.send(myProducts);
+        })
+        app.delete('/bookedItems/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await bookedItemCollection.deleteOne(query);
+            res.send(result);
         })
         app.post('/users', async (req, res) => {
             const user = req.body;
