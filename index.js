@@ -19,6 +19,7 @@ async function run() {
         const carCollections = client.db('car-finder').collection('cars');
         const userCollections = client.db('car-finder').collection('users');
         const bookingCollection = client.db('car-finder').collection('bookings');
+        const bookedItemCollection = client.db('car-finder').collection('bookedItems');
 
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
@@ -37,6 +38,17 @@ async function run() {
             const product = req.body;
             const newProduct = await carCollections.insertOne(product);
             res.send(newProduct);
+        })
+        app.post('/bookedItems', async (req, res) => {
+            const bookedItem = req.body;
+            const result = await bookedItemCollection.insertOne(bookedItem);
+            res.send(result);
+        })
+        app.delete('/cars/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await carCollections.deleteOne(query);
+            res.send(result);
         })
         app.get('/cars/:email', async (req, res) => {
             const email = req.params.email;
