@@ -38,6 +38,12 @@ async function run() {
             const newProduct = await carCollections.insertOne(product);
             res.send(newProduct);
         })
+        app.get('/cars/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const myProducts = await carCollections.find(query).toArray();
+            res.send(myProducts);
+        })
         app.post('/users', async (req, res) => {
             const user = req.body;
             const newUser = await userCollections.insertOne(user);
