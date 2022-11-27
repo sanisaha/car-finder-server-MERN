@@ -39,6 +39,25 @@ async function run() {
             const newProduct = await carCollections.insertOne(product);
             res.send(newProduct);
         })
+        app.get('/latest', async (req, res) => {
+            const query = {};
+            const cursor = carCollections.find(query).sort({ date: -1 });
+            const latestItems = await cursor.limit(4).toArray();
+            res.send(latestItems);
+        })
+        app.put('/cars/item/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const action = req.body;
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    action: action.advertize
+                }
+            }
+            const result = await carCollections.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
         app.post('/bookedItems', async (req, res) => {
             const bookedItem = req.body;
             const result = await bookedItemCollection.insertOne(bookedItem);
