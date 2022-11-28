@@ -22,7 +22,7 @@ async function run() {
         const bookingCollection = client.db('car-finder').collection('bookings');
         const bookedItemCollection = client.db('car-finder').collection('bookedItems');
         const paymentsCollection = client.db('car-finder').collection('payments');
-
+        //api created for data loading based on category
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
             const query = {
@@ -36,17 +36,20 @@ async function run() {
             res.send(result);
 
         })
+        //items posted on db via server by sellers
         app.post('/cars', async (req, res) => {
             const product = req.body;
             const newProduct = await carCollections.insertOne(product);
             res.send(newProduct);
         })
+        //api created for latest data by sort method and data limit to 4
         app.get('/latest', async (req, res) => {
             const query = {};
             const cursor = carCollections.find(query).sort({ date: -1 });
             const latestItems = await cursor.limit(4).toArray();
             res.send(latestItems);
         })
+        // product information updated through put method..advertize property set on products by seller
         app.put('/cars/item/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -60,6 +63,7 @@ async function run() {
             const result = await carCollections.updateOne(filter, updatedDoc, options);
             res.send(result);
         })
+        //data api created for advertize item sorting by advertize property in product
         app.get('/advertize', async (req, res) => {
             const query = { action: 'advertize' };
             const cars = await carCollections.find(query).toArray();
@@ -144,24 +148,28 @@ async function run() {
             const users = await userCollections.find(query).toArray();
             res.send(users);
         });
+        //data api created for single seller with email
         app.get('/users/seller/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const seller = await userCollections.findOne(query);
             res.send({ isSeller: seller?.userType == "I am a Seller" });
         })
+        //data api created for single buyer with email
         app.get('/users/buyer/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const buyer = await userCollections.findOne(query);
             res.send({ isBuyer: buyer?.userType == "I am a Buyer" });
         })
+        //data api created for single admin with email
         app.get('/users/admin/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const admin = await userCollections.findOne(query);
             res.send({ isAdmin: admin?.userType == "admin" });
         })
+        //admin updating the seller status and set property in seller info database
         app.put('/users/verify/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -188,6 +196,7 @@ async function run() {
             const result = await userCollections.updateOne(filter, updatedDoc, options);
             res.send(result);
         }),
+            //payment information getting from client and give him a secrect code
             app.post('/create-payment-intent', async (req, res) => {
                 const booking = req.body;
                 const price = booking.price;
@@ -203,6 +212,7 @@ async function run() {
                 res.send({
                     clientSecret: paymentIntent.client_secret,
                 })
+                // payment information and payer information set on database
                 app.post('/payments', async (req, res) => {
                     const payment = req.body;
                     const result = await paymentsCollection.insertOne(payment);
