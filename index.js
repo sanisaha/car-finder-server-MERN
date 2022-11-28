@@ -58,6 +58,11 @@ async function run() {
             const result = await carCollections.updateOne(filter, updatedDoc, options);
             res.send(result);
         })
+        app.get('/advertize', async (req, res) => {
+            const query = { action: 'advertize' };
+            const cars = await carCollections.find(query).toArray();
+            res.send(cars);
+        })
         app.post('/bookedItems', async (req, res) => {
             const bookedItem = req.body;
             const result = await bookedItemCollection.insertOne(bookedItem);
