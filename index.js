@@ -4,6 +4,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -20,6 +21,7 @@ async function run() {
         const userCollections = client.db('car-finder').collection('users');
         const bookingCollection = client.db('car-finder').collection('bookings');
         const bookedItemCollection = client.db('car-finder').collection('bookedItems');
+        const paymentsCollection = client.db('car-finder').collection('payments');
 
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
@@ -108,11 +110,30 @@ async function run() {
             const userBookings = await bookingCollection.find(query).toArray();
             res.send(userBookings);
         })
+        app.get('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await bookingCollection.findOne(query);
+            res.send(result);
+        })
+
         app.get('/users', async (req, res) => {
             const query = {};
             const users = await userCollections.find(query).toArray();
             res.send(users);
         });
+        app.get('/verified', async (req, res) => {
+            const sellerEmail = req.query.email;
+            const query = { email: sellerEmail };
+            const seller = await userCollections.findOne(query);
+            res.send(seller);
+        })
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await userCollections.deleteOne(query);
+            res.send(result);
+        })
         app.get('/buyers', async (req, res) => {
             const query = { userType: 'I am a Buyer' };
             const users = await userCollections.find(query).toArray();
@@ -141,6 +162,19 @@ async function run() {
             const admin = await userCollections.findOne(query);
             res.send({ isAdmin: admin?.userType == "admin" });
         })
+        app.put('/users/verify/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const status = req.body;
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    status: status.verify
+                }
+            }
+            const result = await userCollections.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
         app.put('/users/admin/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -153,7 +187,39 @@ async function run() {
             }
             const result = await userCollections.updateOne(filter, updatedDoc, options);
             res.send(result);
-        });
+        }),
+            app.post('/create-payment-intent', async (req, res) => {
+                const booking = req.body;
+                const price = booking.price;
+                const amount = price * 100;
+
+                const paymentIntent = await stripe.paymentIntents.create({
+                    currency: 'usd',
+                    amount: amount,
+                    "payment_method_types": [
+                        "card"
+                    ]
+                });
+                res.send({
+                    clientSecret: paymentIntent.client_secret,
+                })
+                app.post('/payments', async (req, res) => {
+                    const payment = req.body;
+                    const result = await paymentsCollection.insertOne(payment);
+                    const id = payment.bookingId
+                    const filter = { _id: ObjectId(id) }
+                    const updatedDoc = {
+                        $set: {
+                            paid: true,
+                            transactionId: payment.transactionId
+                        }
+                    }
+                    const updatedResult = await bookingCollection.updateOne(filter, updatedDoc)
+                    res.send(result);
+                })
+                    ;
+            });
+        ;
 
     }
     finally {
