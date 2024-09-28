@@ -36,11 +36,74 @@ async function run() {
             res.send(result);
 
         })
+        //api for get all cars data
+        app.get('/cars', async (req, res) => {
+            const { type, gearBox, engine, conditionType, minResalePrice, maxResalePrice, minYear, maxYear, page = 1, limit = 10 } = req.query;
+        
+            let query = {};
+        
+            // Filtering by type
+            if (type) {
+                query.type = type;
+            }
+        
+            // Filtering by gearBox
+            if (gearBox) {
+                query.gearBox = gearBox;
+            }
+        
+            // Filtering by engine type
+            if (engine) {
+                query.engine = engine;
+            }
+        
+            // Filtering by condition type
+            if (conditionType) {
+                query.conditionType = conditionType;
+            }
+        
+            // Filtering by resale price range
+            if (minResalePrice || maxResalePrice) {
+                query.resalePrice = {};
+                if (minResalePrice) query.resalePrice.$gte = parseInt(minResalePrice);
+                if (maxResalePrice) query.resalePrice.$lte = parseInt(maxResalePrice);
+            }
+        
+            // Filtering by year of purchase range
+            if (minYear || maxYear) {
+                query.yearOfPurchase = {};
+                if (minYear) query.yearOfPurchase.$gte = parseInt(minYear);
+                if (maxYear) query.yearOfPurchase.$lte = parseInt(maxYear);
+            }
+
+            // Pagination
+    const options = {
+        skip: (parseInt(page) - 1) * parseInt(limit), // Skips documents to get the correct page
+        limit: parseInt(limit), // Limits the number of documents returned
+    };
+        
+            try {
+                const cars = await carCollections.find(query).toArray();
+                const totalCars = await carCollections.countDocuments(query);
+                res.send({ cars, totalCars, currentPage: parseInt(page), totalPages: Math.ceil(totalCars / parseInt(limit)) });
+            } catch (error) {
+                res.status(500).send({ message: "Failed to retrieve cars", error });
+            }
+        });
+        
+
         //items posted on db via server by sellers
         app.post('/cars', async (req, res) => {
             const product = req.body;
             const newProduct = await carCollections.insertOne(product);
             res.send(newProduct);
+        })
+        //get cars by engine type
+        app.get('/cars/engine/:engine', async (req, res) => {
+            const engine = req.params.engine;
+            const query = { engine };
+            const cars = await carCollections.find(query).toArray();
+            res.send(cars);
         })
         //api created for latest data by sort method and data limit to 4
         app.get('/latest', async (req, res) => {
@@ -63,6 +126,13 @@ async function run() {
             const result = await carCollections.updateOne(filter, updatedDoc, options);
             res.send(result);
         })
+        // get car by id
+        app.get('/cars/item/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await carCollections.findOne(query);
+            res.send(result);
+        })
         //data api created for advertize item sorting by advertize property in product
         app.get('/advertize', async (req, res) => {
             const query = { action: 'advertize' };
@@ -80,6 +150,7 @@ async function run() {
             const result = await carCollections.deleteOne(query);
             res.send(result);
         })
+        
         app.get('/cars/:email', async (req, res) => {
             const email = req.params.email;
             const query = { sellerEmail: email };
