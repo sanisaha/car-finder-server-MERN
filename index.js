@@ -83,7 +83,7 @@ async function run() {
     };
         
             try {
-                const cars = await carCollections.find(query).toArray();
+                const cars = await carCollections.find(query).skip(options.skip).limit(options.limit).toArray();
                 const totalCars = await carCollections.countDocuments(query);
                 res.send({ cars, totalCars, currentPage: parseInt(page), totalPages: Math.ceil(totalCars / parseInt(limit)) });
             } catch (error) {
